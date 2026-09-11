@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="rbbr-ready" content="Brisbane/AEST READY 2026-09-11 thanks-landing">
+<meta name="rbbr-ready" content="Brisbane 2026-09-11 19:06 AEST checkbox-only-v2">
 <meta name="robots" content="noindex,nofollow">
 <title>BBR Capture</title>
 <style>
@@ -202,12 +202,9 @@
   function viewGate() {
     return brand() + progress(2, TOTAL) + `
       <div class="card">
-        <h2>One hard rule before we continue</h2>
-        <p>Sleeves never leave the court. Tick the box — no photos leave with you.</p>
-        <label class="checkline"><input type="checkbox" id="gateCheck" ${state.gateChecked ? 'checked' : ''}> I confirm — I did not take any photographs</label>
-        <p class="err" id="gateErr">Tick the no-photo box to continue.</p>
-        <button class="btn" id="gateGo">I agree — continue</button>
-        <button class="btn ghost" data-go="landing">Back</button>
+        <h2>One quick tick</h2>
+        <p>Sleeves stay on court. No photos leave with you.</p>
+        <label class="checkline"><input type="checkbox" id="gateCheck" ${state.gateChecked ? 'checked' : ''}> I did not take any photographs</label>
       </div>` + stewardFooter();
   }
 
@@ -441,16 +438,16 @@
 
     const gateCheck = document.getElementById('gateCheck');
     if (gateCheck) {
-      gateCheck.onchange = (e) => { state.gateChecked = e.target.checked; };
-      document.getElementById('gateGo').onclick = () => {
-        const ok = !!state.gateChecked;
-        const err = document.getElementById('gateErr');
-        if (!ok) { err.classList.add('on'); return; }
-        err.classList.remove('on');
-        state.step = 'thanks';
-        render();
+      gateCheck.onchange = (e) => {
+        state.gateChecked = e.target.checked;
+        if (state.gateChecked) {
+          state.step = 'thanks';
+          persist();
+          render();
+        }
       };
     }
+
 
     const pathDraw = document.getElementById('pathDraw');
     if (pathDraw) {
