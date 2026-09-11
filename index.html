@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="rbbr-ready" content="Brisbane/AEST READY 2026-09-11">
+<meta name="rbbr-ready" content="Brisbane/AEST READY 2026-09-11 gate-checkbox">
 <meta name="robots" content="noindex,nofollow">
 <title>BBR Capture</title>
 <style>
@@ -118,7 +118,6 @@
 <script>
 (function () {
   const STORAGE_KEY = 'rbbr_field_responses_v1';
-  const GATE_PHRASE = 'I did not take any photographs';
   const NAMES = ['RBBR', 'Soft Edge', 'Spin Feel', 'Orange Band', 'Grip Glow', 'Rubber Door'];
   const STEWARD = new URLSearchParams(location.search).get('steward') === '1';
   const state = {
@@ -204,12 +203,9 @@
     return brand() + progress(2, TOTAL) + `
       <div class="card">
         <h2>One hard rule before we continue</h2>
-        <p>Sleeves never leave the court, and we need a clear no-photo agree. Type this exactly:</p>
-        <p style="font-weight:800;background:var(--cream-dim);padding:12px;border-radius:10px;border:2px dashed var(--black)">${esc(GATE_PHRASE)}</p>
-        <label for="gateTyped">Type it here</label>
-        <input id="gateTyped" type="text" autocomplete="off" autocapitalize="sentences" placeholder="${esc(GATE_PHRASE)}" value="${esc(state.gateTyped)}">
+        <p>Sleeves never leave the court. Tick the box — no photos leave with you.</p>
         <label class="checkline"><input type="checkbox" id="gateCheck" ${state.gateChecked ? 'checked' : ''}> I confirm — I did not take any photographs</label>
-        <p class="err" id="gateErr">Needs the exact phrase + the checkbox. Almost there.</p>
+        <p class="err" id="gateErr">Tick the no-photo box to continue.</p>
         <button class="btn" id="gateGo">I agree — continue</button>
         <button class="btn ghost" data-go="landing">Back</button>
       </div>` + stewardFooter();
@@ -443,12 +439,11 @@
       el.onclick = () => { state.step = el.getAttribute('data-go'); render(); };
     });
 
-    const gateTyped = document.getElementById('gateTyped');
-    if (gateTyped) {
-      gateTyped.oninput = () => { state.gateTyped = gateTyped.value; };
-      document.getElementById('gateCheck').onchange = (e) => { state.gateChecked = e.target.checked; };
+    const gateCheck = document.getElementById('gateCheck');
+    if (gateCheck) {
+      gateCheck.onchange = (e) => { state.gateChecked = e.target.checked; };
       document.getElementById('gateGo').onclick = () => {
-        const ok = state.gateTyped.trim() === GATE_PHRASE && state.gateChecked;
+        const ok = !!state.gateChecked;
         const err = document.getElementById('gateErr');
         if (!ok) { err.classList.add('on'); return; }
         err.classList.remove('on');
