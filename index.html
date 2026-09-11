@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="rbbr-ready" content="Brisbane/AEST READY 2026-09-11">
+<meta name="robots" content="noindex,nofollow">
+<title>BBR Capture</title>
+<style>
+  :root {
+    --orange: #FF6A00;
+    --orange-hot: #FF8533;
+    --black: #0A0A0A;
+    --ink: #141414;
+    --cream: #FFF6EC;
+    --cream-dim: #F5E6D3;
+    --muted: #6B5E52;
+    --ok: #1B7A3D;
+    --danger: #B42318;
+    --radius: 16px;
+    --tap: 52px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.45;
+    min-height: 100%;
+  }
+  body { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 1.55rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.25rem; margin: 0 0 10px; }
+  p { margin: 0 0 14px; }
+  .muted { color: var(--muted); font-size: 0.92rem; }
+  .tiny { font-size: 0.8rem; color: var(--muted); }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 800; letter-spacing: 0.08em; color: var(--orange);
+    text-transform: uppercase; font-size: 0.85rem; margin-bottom: 12px;
+  }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+  .card {
+    background: #fff;
+    border: 2px solid var(--black);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    box-shadow: 4px 4px 0 var(--black);
+    margin-bottom: 16px;
+  }
+  .screen { display: none; animation: in 0.22s ease; }
+  .screen.on { display: block; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  label { display: block; font-weight: 650; margin: 12px 0 6px; font-size: 0.95rem; }
+  input[type="text"], input[type="tel"], input[type="number"], textarea, select {
+    width: 100%; min-height: var(--tap); padding: 12px 14px;
+    border: 2px solid var(--black); border-radius: 12px;
+    font-size: 1rem; background: var(--cream); color: var(--ink);
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  input:focus, textarea:focus { outline: 3px solid var(--orange); outline-offset: 1px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: var(--tap); margin-top: 12px; padding: 14px 16px;
+    border: 2px solid var(--black); border-radius: 14px;
+    font-size: 1.05rem; font-weight: 750; cursor: pointer;
+    background: var(--orange); color: var(--black);
+    box-shadow: 3px 3px 0 var(--black);
+  }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--black); }
+  .btn.secondary { background: #fff; }
+  .btn.ghost { background: var(--cream-dim); box-shadow: none; }
+  .btn.dark { background: var(--black); color: var(--orange); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: 3px 3px 0 var(--black); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .chip {
+    min-height: 44px; padding: 10px 14px; border: 2px solid var(--black);
+    border-radius: 999px; background: #fff; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+  }
+  .chip.on { background: var(--orange); }
+  .promise {
+    background: var(--cream-dim); border-left: 4px solid var(--orange);
+    padding: 10px 12px; border-radius: 0 10px 10px 0; font-size: 0.9rem; margin: 10px 0;
+  }
+  .price-grid { display: grid; gap: 10px; margin: 12px 0; }
+  .price {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; border: 2px solid var(--black); border-radius: 12px; background: #fff;
+    font-weight: 750;
+  }
+  .price span { color: var(--orange); font-size: 1.15rem; }
+  .steward-note {
+    margin-top: 18px; padding: 10px; border: 1px dashed var(--muted);
+    border-radius: 10px; font-size: 0.78rem; color: var(--muted);
+  }
+  .err { color: var(--danger); font-size: 0.9rem; margin-top: 8px; display: none; }
+  .err.on { display: block; }
+  .progress { display: flex; gap: 4px; margin-bottom: 14px; }
+  .progress i { flex: 1; height: 4px; background: var(--cream-dim); border-radius: 2px; }
+  .progress i.on { background: var(--orange); }
+  .selfie-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; border: 2px solid var(--black); margin-top: 8px; display: none; }
+  .selfie-preview.on { display: block; }
+  #videoCam { width: 100%; border-radius: 12px; border: 2px solid var(--black); background: #000; max-height: 240px; display: none; }
+  .row { display: flex; gap: 8px; }
+  .row .btn { flex: 1; }
+  .checkline { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 0.95rem; }
+  .checkline input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--orange); flex-shrink: 0; }
+  .big-num input { font-size: 1.6rem; font-weight: 800; text-align: center; }
+  table.resp { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+  table.resp th, table.resp td { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: top; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--orange); color: #000; font-weight: 700; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  const STORAGE_KEY = 'rbbr_field_responses_v1';
+  const GATE_PHRASE = 'I did not take any photographs';
+  const NAMES = ['RBBR', 'Soft Edge', 'Spin Feel', 'Orange Band', 'Grip Glow', 'Rubber Door'];
+  const STEWARD = new URLSearchParams(location.search).get('steward') === '1';
+  const state = {
+    step: STEWARD ? 'steward' : 'landing',
+    gateTyped: '',
+    gateChecked: false,
+    name: '',
+    phone: '',
+    address: '',
+    coldAnon: false,
+    drawEntered: false,
+    contactOptIn: false,
+    journeyOptIn: false,
+    namePicks: [],
+    nameSuggestion: '',
+    dupr: '',
+    wtp: '',
+    interest: '', // buy | list | not
+    whyNot: '',
+    selfieDataUrl: '',
+    payStub: false,
+    detailsShown: false
+  };
+
+  function uid() { return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function saveResponse(rec) {
+    const all = loadAll();
+    all.push(rec);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function progress(n, total) {
+    let html = '<div class="progress" aria-hidden="true">';
+    for (let i = 1; i <= total; i++) html += '<i class="' + (i <= n ? 'on' : '') + '"></i>';
+    return html + '</div>';
+  }
+  function brand() {
+    return '<div class="brand"><span class="brand-dot"></span> RBBR · field thank-you</div>';
+  }
+  function stewardFooter() {
+    return '<p class="steward-note">Sleeves stay on site · Al (or steward) is right here · no photos leave with you</p>';
+  }
+
+  const TOTAL = 10;
+
+  function render() {
+    const root = document.getElementById('app');
+    const s = state.step;
+    if (s === 'steward') { root.innerHTML = viewSteward(); bindSteward(); return; }
+    if (s === 'landing') root.innerHTML = viewLanding();
+    else if (s === 'gate') root.innerHTML = viewGate();
+    else if (s === 'thanks') root.innerHTML = viewThanks();
+    else if (s === 'names') root.innerHTML = viewNames();
+    else if (s === 'wtp') root.innerHTML = viewWtp();
+    else if (s === 'dupr') root.innerHTML = viewDupr();
+    else if (s === 'price') root.innerHTML = viewPrice();
+    else if (s === 'choice') root.innerHTML = viewChoice();
+    else if (s === 'draw') root.innerHTML = viewDraw();
+    else if (s === 'details') root.innerHTML = viewDetails();
+    else if (s === 'journey') root.innerHTML = viewJourney();
+    else if (s === 'selfie') root.innerHTML = viewSelfie();
+    else if (s === 'pay') root.innerHTML = viewPay();
+    else if (s === 'done') root.innerHTML = viewDone();
+    bind();
+  }
+
+  function viewLanding() {
+    return brand() + progress(1, TOTAL) + `
+      <div class="card">
+        <h1>You just hit something weirdly good.</h1>
+        <p>Thanks for giving the sleeve a swing. This is a 60-second thank-you chat — playful, no corporate forms, no spam traps.</p>
+        <p class="muted">Quick promise up front: we will <strong>not</strong> contact you and will <strong>not</strong> use your data unless you ask (or enter the $100 paddle draw).</p>
+        <button class="btn" data-go="gate">Let's go →</button>
+      </div>` + stewardFooter();
+  }
+
+  function viewGate() {
+    return brand() + progress(2, TOTAL) + `
+      <div class="card">
+        <h2>One hard rule before we continue</h2>
+        <p>Sleeves never leave the court, and we need a clear no-photo agree. Type this exactly:</p>
+        <p style="font-weight:800;background:var(--cream-dim);padding:12px;border-radius:10px;border:2px dashed var(--black)">${esc(GATE_PHRASE)}</p>
+        <label for="gateTyped">Type it here</label>
+        <input id="gateTyped" type="text" autocomplete="off" autocapitalize="sentences" placeholder="${esc(GATE_PHRASE)}" value="${esc(state.gateTyped)}">
+        <label class="checkline"><input type="checkbox" id="gateCheck" ${state.gateChecked ? 'checked' : ''}> I confirm — I did not take any photographs</label>
+        <p class="err" id="gateErr">Needs the exact phrase + the checkbox. Almost there.</p>
+        <button class="btn" id="gateGo">I agree — continue</button>
+        <button class="btn ghost" data-go="landing">Back</button>
+      </div>` + stewardFooter();
+  }
+
+  function viewThanks() {
+    return brand() + progress(3, TOTAL) + `
+      <div class="card">
+        <h2>Cheers — you're in.</h2>
+        <p>How keen are you feeling right now?</p>
+        <button class="btn" id="pathDraw">Enter the $100 paddle DRAW →</button>
+        <button class="btn secondary" id="pathSoft">Happy to chat / soft sell path</button>
+        <button class="btn ghost" id="pathCold">Cold / not interested (stay anonymous OK)</button>
+        <p class="tiny" style="margin-top:12px">Draw needs name + phone (address if easy). Cold path can stay anonymous. Contact only if you explicitly opt in later.</p>
+      </div>`;
+  }
+
+  function viewNames() {
+    const chips = NAMES.map(n => {
+      const on = state.namePicks.includes(n) ? ' on' : '';
+      return `<button type="button" class="chip${on}" data-name="${esc(n)}">${esc(n)}</button>`;
+    }).join('');
+    return brand() + progress(4, TOTAL) + `
+      <div class="card">
+        <h2>What should we call this thing?</h2>
+        <p class="muted">Tap any you like (multi-select). Or invent something better.</p>
+        <div class="chips" id="nameChips">${chips}</div>
+        <label for="nameSug">Your suggestion</label>
+        <input id="nameSug" type="text" placeholder="e.g. Spin Hug, Court Candy…" value="${esc(state.nameSuggestion)}">
+        <button class="btn" data-go="wtp">Next →</button>
+        <button class="btn ghost" data-go="thanks">Back</button>
+      </div>`;
+  }
+
+  function viewWtp() {
+    return brand() + progress(5, TOTAL) + `
+      <div class="card">
+        <h2>Blind question first</h2>
+        <p>Before we show any price — what's a sleeve like this <em>worth</em> to you? (AUD, gut feel)</p>
+        <div class="big-num">
+          <label for="wtp">I'd pay about $</label>
+          <input id="wtp" type="number" inputmode="decimal" min="0" step="1" placeholder="?" value="${esc(state.wtp)}">
+        </div>
+        <p class="tiny">No wrong answer. Honest gut > polished guess.</p>
+        <button class="btn" id="wtpGo">Lock it in →</button>
+        <button class="btn ghost" data-go="names">Back</button>
+        <p class="err" id="wtpErr">Pop a number in (0 is fine if you'd pass).</p>
+      </div>`;
+  }
+
+  function viewDupr() {
+    return brand() + progress(6, TOTAL) + `
+      <div class="card">
+        <h2>DUPR? Optional.</h2>
+        <p class="muted">Blank is totally fine. We're not ranking anyone.</p>
+        <label for="dupr">DUPR (or leave blank)</label>
+        <input id="dupr" type="text" inputmode="decimal" placeholder="e.g. 3.8 or blank" value="${esc(state.dupr)}">
+        <button class="btn" data-go="price">Show me the prices →</button>
+        <button class="btn ghost" data-go="wtp">Back</button>
+      </div>`;
+  }
+
+  function viewPrice() {
+    return brand() + progress(7, TOTAL) + `
+      <div class="card">
+        <h2>Alright — the numbers</h2>
+        <p class="muted">You said ~$${esc(state.wtp || '?')} before seeing this.</p>
+        <div class="price-grid">
+          <div class="price">1 sleeve <span>$40</span></div>
+          <div class="price">2 sleeves <span>$30 ea</span></div>
+          <div class="price">4 sleeves <span>$25 ea</span></div>
+        </div>
+        <button class="btn" data-go="choice">Got it — what next?</button>
+      </div>`;
+  }
+
+  function viewChoice() {
+    return brand() + progress(8, TOTAL) + `
+      <div class="card">
+        <h2>Where are you at?</h2>
+        <button class="btn" data-interest="buy">I'd Buy 🔥</button>
+        <button class="btn secondary" data-interest="list">Mailing list (when it's ready)</button>
+        <button class="btn ghost" data-interest="not">Not interested</button>
+        <div id="whyWrap" style="display:${state.interest==='not'?'block':'none'}">
+          <label for="whyNot">Quick why? (helps a lot)</label>
+          <textarea id="whyNot" placeholder="Price / feel / already sorted / not my thing…">${esc(state.whyNot)}</textarea>
+        </div>
+        <button class="btn dark" id="choiceGo" ${state.interest ? '' : 'disabled'}>Continue →</button>
+      </div>`;
+  }
+
+  function viewDraw() {
+    return brand() + progress(3, TOTAL) + `
+      <div class="card">
+        <h2>$100 Emerald Lakes custom paddle DRAW</h2>
+        <p>To enter, we need <strong>name + phone</strong> (address if easy). That's it.</p>
+        <div class="promise">Hard promise: we will <strong>not</strong> contact you and will <strong>not</strong> use your data unless you ask (or enter this draw).</div>
+        <label for="dName">Name *</label>
+        <input id="dName" type="text" autocomplete="name" value="${esc(state.name)}">
+        <label for="dPhone">Phone *</label>
+        <input id="dPhone" type="tel" autocomplete="tel" value="${esc(state.phone)}">
+        <label for="dAddr">Address (optional, if easy)</label>
+        <input id="dAddr" type="text" autocomplete="street-address" value="${esc(state.address)}">
+        <label class="checkline"><input type="checkbox" id="dContact" ${state.contactOptIn?'checked':''}> Yes — you may contact me about this (optional opt-in)</label>
+        <p class="err" id="drawErr">Name + phone needed for the draw.</p>
+        <button class="btn" id="drawGo">I'm in the draw →</button>
+        <button class="btn ghost" data-go="thanks">Back</button>
+      </div>`;
+  }
+
+  function viewDetails() {
+    const need = state.interest === 'buy' || state.interest === 'list' || state.drawEntered;
+    return brand() + progress(8, TOTAL) + `
+      <div class="card">
+        <h2>${need ? 'Details (quick)' : 'Details? Totally optional'}</h2>
+        <p class="muted">${state.coldAnon && !need ? 'You can skip and stay anonymous.' : 'Progressive — only what helps.'}</p>
+        <div class="promise">Hard promise: we will <strong>not</strong> contact you and will <strong>not</strong> use your data unless you ask (or enter the draw).</div>
+        <label for="pName">Name ${need ? '*' : ''}</label>
+        <input id="pName" type="text" autocomplete="name" value="${esc(state.name)}">
+        <label for="pPhone">Phone ${need ? '*' : ''}</label>
+        <input id="pPhone" type="tel" autocomplete="tel" value="${esc(state.phone)}">
+        <label for="pAddr">Address (if easy)</label>
+        <input id="pAddr" type="text" autocomplete="street-address" value="${esc(state.address)}">
+        <label class="checkline"><input type="checkbox" id="pContact" ${state.contactOptIn?'checked':''}> Explicit contact opt-in (only if you want us to reach out)</label>
+        <p class="err" id="detErr">Name + phone please for buy / list / draw.</p>
+        <button class="btn" id="detGo">Continue →</button>
+        ${!need ? '<button class="btn ghost" id="detSkip">Skip — stay anonymous</button>' : ''}
+      </div>`;
+  }
+
+  function viewJourney() {
+    return brand() + progress(9, TOTAL) + `
+      <div class="card">
+        <h2>Want in on the journey?</h2>
+        <p>Separate from mailing-list / buy — this is the “test new stuff with us” crew. Simon-Sinek energy: early believers, not a newsletter dump.</p>
+        <button class="btn" id="journeyYes">Yes — notify me / put me on the test team</button>
+        <button class="btn ghost" id="journeyNo">No thanks</button>
+        <p class="tiny">We'll only use this if you say yes here. Still won't spam.</p>
+      </div>`;
+  }
+
+  function viewSelfie() {
+    return brand() + progress(9, TOTAL) + `
+      <div class="card">
+        <h2>Optional grin shot</h2>
+        <p class="muted">Only if you loved it. Stays local on this phone/steward device (data URL). Skip anytime.</p>
+        <video id="videoCam" playsinline autoplay muted></video>
+        <canvas id="selfieCanvas" style="display:none"></canvas>
+        <img id="selfiePrev" class="selfie-preview ${state.selfieDataUrl?'on':''}" src="${state.selfieDataUrl || ''}" alt="selfie preview">
+        <button class="btn secondary" id="camStart">Open camera</button>
+        <button class="btn" id="camSnap" style="display:none">Snap 📸</button>
+        <button class="btn ghost" id="camSkip">Skip selfie →</button>
+        <button class="btn dark" id="camNext" ${state.selfieDataUrl?'':'style="display:none"'}>Use this →</button>
+      </div>`;
+  }
+
+  function viewPay() {
+    return brand() + progress(10, TOTAL) + `
+      <div class="card">
+        <h2>Keen to buy?</h2>
+        <p>v1 stub — Al takes payment on court. Stripe placeholder below (no real charge).</p>
+        <button class="btn" id="payAl">Al takes payment ✓</button>
+        <button class="btn secondary" id="payStripe">Stripe placeholder (no charge)</button>
+        <button class="btn ghost" id="paySkip">Skip payment →</button>
+      </div>`;
+  }
+
+  function viewDone() {
+    const count = loadAll().length;
+    return brand() + `
+      <div class="card">
+        <h1>You're a legend. Thanks.</h1>
+        <p>Response saved. Go smash another rally — sleeves stay here with Al.</p>
+        <p class="pill">Saved locally · steward count ${count}</p>
+        <button class="btn" onclick="location.href=location.pathname+location.search.split('&')[0].replace(/[?&]v=[^&]*/,'')+(location.search.includes('v=')?'':'')+location.search.replace(/^\?/,'?').replace(/steward=1/,'')">Done</button>
+        <button class="btn ghost" id="again">Capture another</button>
+      </div>` + stewardFooter();
+  }
+
+  function viewSteward() {
+    const all = loadAll();
+    const rows = all.slice().reverse().map((r, i) => `
+      <tr>
+        <td>${esc(r.tsLocal || r.ts || '')}</td>
+        <td>${esc(r.name || (r.coldAnon ? 'anon' : '—'))}<br>${esc(r.phone || '')}</td>
+        <td>WTP $${esc(r.wtp)} · ${esc(r.interest)} · draw:${r.drawEntered?'Y':'n'} · journey:${r.journeyOptIn?'Y':'n'} · contact:${r.contactOptIn?'Y':'n'}<br>
+        names: ${esc((r.namePicks||[]).join(', '))}${r.nameSuggestion ? ' / ' + esc(r.nameSuggestion) : ''}<br>
+        DUPR: ${esc(r.dupr || '—')} · why: ${esc(r.whyNot || '—')}</td>
+      </tr>`).join('');
+    return `
+      <div class="brand"><span class="brand-dot"></span> STEWARD · Responses <span class="pill">${all.length}</span></div>
+      <div class="card">
+        <h2>Field captures</h2>
+        <p class="tiny">Hidden view · ?steward=1 · localStorage only</p>
+        <div style="overflow:auto;max-height:70vh">
+          <table class="resp">
+            <thead><tr><th>When</th><th>Who</th><th>Data</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="3">No responses yet</td></tr>'}</tbody>
+          </table>
+        </div>
+        <button class="btn secondary" id="exportJson">Export JSON</button>
+        <button class="btn ghost" id="clearAll">Clear all (careful)</button>
+        <a class="btn" href="?v=${Date.now()}">Open capture flow</a>
+      </div>`;
+  }
+
+  function bindSteward() {
+    const ex = document.getElementById('exportJson');
+    if (ex) ex.onclick = () => {
+      const blob = new Blob([JSON.stringify(loadAll(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'rbbr-field-responses.json';
+      a.click();
+    };
+    const cl = document.getElementById('clearAll');
+    if (cl) cl.onclick = () => {
+      if (confirm('Clear ALL local responses?')) { localStorage.removeItem(STORAGE_KEY); render(); }
+    };
+  }
+
+  let camStream = null;
+  function stopCam() {
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    const v = document.getElementById('videoCam');
+    if (v) { v.srcObject = null; v.style.display = 'none'; }
+  }
+
+  function bind() {
+    document.querySelectorAll('[data-go]').forEach(el => {
+      el.onclick = () => { state.step = el.getAttribute('data-go'); render(); };
+    });
+
+    const gateTyped = document.getElementById('gateTyped');
+    if (gateTyped) {
+      gateTyped.oninput = () => { state.gateTyped = gateTyped.value; };
+      document.getElementById('gateCheck').onchange = (e) => { state.gateChecked = e.target.checked; };
+      document.getElementById('gateGo').onclick = () => {
+        const ok = state.gateTyped.trim() === GATE_PHRASE && state.gateChecked;
+        const err = document.getElementById('gateErr');
+        if (!ok) { err.classList.add('on'); return; }
+        err.classList.remove('on');
+        state.step = 'thanks';
+        render();
+      };
+    }
+
+    const pathDraw = document.getElementById('pathDraw');
+    if (pathDraw) {
+      pathDraw.onclick = () => { state.drawEntered = true; state.coldAnon = false; state.step = 'draw'; render(); };
+      document.getElementById('pathSoft').onclick = () => { state.drawEntered = false; state.coldAnon = false; state.step = 'names'; render(); };
+      document.getElementById('pathCold').onclick = () => { state.drawEntered = false; state.coldAnon = true; state.step = 'names'; render(); };
+    }
+
+    document.querySelectorAll('[data-name]').forEach(chip => {
+      chip.onclick = () => {
+        const n = chip.getAttribute('data-name');
+        if (state.namePicks.includes(n)) state.namePicks = state.namePicks.filter(x => x !== n);
+        else state.namePicks.push(n);
+        render();
+      };
+    });
+    const nameSug = document.getElementById('nameSug');
+    if (nameSug) nameSug.oninput = () => { state.nameSuggestion = nameSug.value; };
+
+    const wtp = document.getElementById('wtp');
+    if (wtp) {
+      wtp.oninput = () => { state.wtp = wtp.value; };
+      document.getElementById('wtpGo').onclick = () => {
+        if (state.wtp === '' || state.wtp == null) { document.getElementById('wtpErr').classList.add('on'); return; }
+        state.step = 'dupr'; render();
+      };
+    }
+
+    const dupr = document.getElementById('dupr');
+    if (dupr) dupr.oninput = () => { state.dupr = dupr.value; };
+
+    document.querySelectorAll('[data-interest]').forEach(b => {
+      b.onclick = () => {
+        state.interest = b.getAttribute('data-interest');
+        render();
+      };
+    });
+    const why = document.getElementById('whyNot');
+    if (why) why.oninput = () => { state.whyNot = why.value; };
+    const choiceGo = document.getElementById('choiceGo');
+    if (choiceGo) choiceGo.onclick = () => {
+      if (!state.interest) return;
+      // progressive details: buy/list need details; cold may skip; draw already collected
+      if (state.drawEntered && state.name && state.phone) {
+        state.step = 'journey';
+      } else if (state.interest === 'buy' || state.interest === 'list' || (state.drawEntered && (!state.name || !state.phone))) {
+        state.step = 'details';
+      } else if (state.coldAnon && state.interest === 'not') {
+        state.step = 'journey';
+      } else {
+        state.step = 'details';
+      }
+      render();
+    };
+
+    const drawGo = document.getElementById('drawGo');
+    if (drawGo) {
+      document.getElementById('dName').oninput = e => state.name = e.target.value;
+      document.getElementById('dPhone').oninput = e => state.phone = e.target.value;
+      document.getElementById('dAddr').oninput = e => state.address = e.target.value;
+      document.getElementById('dContact').onchange = e => state.contactOptIn = e.target.checked;
+      drawGo.onclick = () => {
+        if (!state.name.trim() || !state.phone.trim()) {
+          document.getElementById('drawErr').classList.add('on'); return;
+        }
+        state.drawEntered = true;
+        state.step = 'names';
+        render();
+      };
+    }
+
+    const detGo = document.getElementById('detGo');
+    if (detGo) {
+      document.getElementById('pName').oninput = e => state.name = e.target.value;
+      document.getElementById('pPhone').oninput = e => state.phone = e.target.value;
+      document.getElementById('pAddr').oninput = e => state.address = e.target.value;
+      document.getElementById('pContact').onchange = e => state.contactOptIn = e.target.checked;
+      const need = state.interest === 'buy' || state.interest === 'list' || state.drawEntered;
+      detGo.onclick = () => {
+        if (need && (!state.name.trim() || !state.phone.trim())) {
+          document.getElementById('detErr').classList.add('on'); return;
+        }
+        state.coldAnon = !(state.name || state.phone);
+        state.step = 'journey';
+        render();
+      };
+      const sk = document.getElementById('detSkip');
+      if (sk) sk.onclick = () => { state.coldAnon = true; state.step = 'journey'; render(); };
+    }
+
+    const jy = document.getElementById('journeyYes');
+    if (jy) {
+      jy.onclick = () => { state.journeyOptIn = true; afterJourney(); };
+      document.getElementById('journeyNo').onclick = () => { state.journeyOptIn = false; afterJourney(); };
+    }
+
+    const camStart = document.getElementById('camStart');
+    if (camStart) {
+      camStart.onclick = async () => {
+        try {
+          camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+          const v = document.getElementById('videoCam');
+          v.srcObject = camStream;
+          v.style.display = 'block';
+          document.getElementById('camSnap').style.display = 'flex';
+        } catch (e) {
+          alert('Camera unavailable — skip is fine.');
+        }
+      };
+      document.getElementById('camSnap').onclick = () => {
+        const v = document.getElementById('videoCam');
+        const c = document.getElementById('selfieCanvas');
+        c.width = v.videoWidth || 640; c.height = v.videoHeight || 480;
+        c.getContext('2d').drawImage(v, 0, 0);
+        state.selfieDataUrl = c.toDataURL('image/jpeg', 0.7);
+        stopCam();
+        render();
+      };
+      document.getElementById('camSkip').onclick = () => { stopCam(); finishOrPay(); };
+      const cn = document.getElementById('camNext');
+      if (cn) cn.onclick = () => { stopCam(); finishOrPay(); };
+    }
+
+    const payAl = document.getElementById('payAl');
+    if (payAl) {
+      payAl.onclick = () => { state.payStub = 'al'; commit(); };
+      document.getElementById('payStripe').onclick = () => { state.payStub = 'stripe_placeholder'; commit(); };
+      document.getElementById('paySkip').onclick = () => { state.payStub = false; commit(); };
+    }
+
+    const again = document.getElementById('again');
+    if (again) again.onclick = () => {
+      Object.assign(state, {
+        step: 'landing', gateTyped: '', gateChecked: false, name: '', phone: '', address: '',
+        coldAnon: false, drawEntered: false, contactOptIn: false, journeyOptIn: false,
+        namePicks: [], nameSuggestion: '', dupr: '', wtp: '', interest: '', whyNot: '',
+        selfieDataUrl: '', payStub: false
+      });
+      render();
+    };
+  }
+
+  function afterJourney() {
+    if (state.interest === 'buy' || state.interest === 'list' || !state.coldAnon) {
+      state.step = 'selfie';
+    } else {
+      state.step = 'selfie';
+    }
+    render();
+  }
+
+  function finishOrPay() {
+    if (state.interest === 'buy') { state.step = 'pay'; render(); }
+    else commit();
+  }
+
+  function commit() {
+    const now = new Date();
+    const bris = now.toLocaleString('en-AU', { timeZone: 'Australia/Brisbane', hour12: false });
+    saveResponse({
+      id: uid(),
+      ts: now.toISOString(),
+      tsLocal: bris + ' AEST',
+      gateOk: true,
+      name: state.name,
+      phone: state.phone,
+      address: state.address,
+      coldAnon: state.coldAnon,
+      drawEntered: state.drawEntered,
+      contactOptIn: state.contactOptIn,
+      journeyOptIn: state.journeyOptIn,
+      namePicks: state.namePicks.slice(),
+      nameSuggestion: state.nameSuggestion,
+      dupr: state.dupr,
+      wtp: state.wtp,
+      interest: state.interest,
+      whyNot: state.whyNot,
+      selfieDataUrl: state.selfieDataUrl ? state.selfieDataUrl.slice(0, 200) + '…[stored]' : '',
+      selfiePresent: !!state.selfieDataUrl,
+      payStub: state.payStub,
+      pricingShown: '1@$40 · 2@$30ea · 4@$25ea'
+    });
+    // store full selfie separately keyed if present (avoid huge list payloads in steward table)
+    if (state.selfieDataUrl) {
+      try { localStorage.setItem('rbbr_selfie_' + Date.now(), state.selfieDataUrl); } catch (e) {}
+    }
+    stopCam();
+    state.step = 'done';
+    render();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
