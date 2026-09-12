@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#FF6A00" />
+<title>Sleeve training check-in</title>
+<style>
+:root {
+  --orange: #FF6A00;
+  --black: #0A0A0A;
+  --ink: #141414;
+  --cream: #FFF6EC;
+  --cream-dim: #F5E6D3;
+  --muted: #6B5E52;
+  --danger: #B42318;
+  --radius: 16px;
+  --tap: 52px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
+  min-height: 100%;
+}
+body { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; }
+h1 { font-size: 1.45rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.2rem; margin: 0 0 10px; }
+p { margin: 0 0 14px; }
+.muted { color: var(--muted); font-size: 0.92rem; }
+.tiny { font-size: 0.8rem; color: var(--muted); }
+.brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 800; letter-spacing: 0.08em; color: var(--orange);
+  text-transform: uppercase; font-size: 0.85rem; margin-bottom: 12px;
+}
+.brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+.card {
+  background: #fff;
+  border: 2px solid var(--black);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  box-shadow: 4px 4px 0 var(--black);
+  margin-bottom: 16px;
+}
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: var(--tap); margin-top: 12px; padding: 14px 16px;
+  border: 2px solid var(--black); border-radius: 14px;
+  font-size: 1.05rem; font-weight: 750; cursor: pointer;
+  background: var(--orange); color: var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+}
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--black); }
+.btn.secondary { background: #fff; }
+.btn.ghost { background: var(--cream-dim); box-shadow: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+.chip {
+  min-height: 44px; padding: 10px 14px; border: 2px solid var(--black);
+  border-radius: 999px; background: #fff; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+}
+.chip.on { background: var(--orange); }
+.progress { display: flex; gap: 4px; margin-bottom: 14px; }
+.progress i { flex: 1; height: 4px; background: var(--cream-dim); border-radius: 2px; }
+.progress i.on { background: var(--orange); }
+.checkline { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 0.95rem; }
+.checkline input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--orange); flex-shrink: 0; }
+label { display: block; font-weight: 650; margin: 12px 0 6px; font-size: 0.95rem; }
+input[type="text"], input[type="tel"], textarea {
+  width: 100%; min-height: var(--tap); padding: 12px 14px;
+  border: 2px solid var(--black); border-radius: 12px;
+  font-size: 1rem; background: var(--cream); color: var(--ink);
+}
+textarea { min-height: 96px; resize: vertical; }
+.promise {
+  background: var(--cream-dim); border-left: 4px solid var(--orange);
+  padding: 10px 12px; border-radius: 0 10px 10px 0; font-size: 0.9rem; margin: 10px 0;
+}
+.steward-note {
+  margin-top: 18px; padding: 10px; border: 1px dashed var(--muted);
+  border-radius: 10px; font-size: 0.78rem; color: var(--muted);
+}
+.err { color: var(--danger); font-size: 0.9rem; margin-top: 8px; display: none; }
+.err.on { display: block; }
+.scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0; }
+.scale .chip { min-height: 48px; border-radius: 12px; padding: 8px 4px; text-align: center; font-size: 0.9rem; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--orange); color: #000; font-weight: 700; font-size: 0.75rem; }
+table.resp { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+table.resp th, table.resp td { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  const STORAGE_KEY = 'rbbr_training_survey_v1';
+  const STEWARD = new URLSearchParams(location.search).get('steward') === '1';
+  const SHOTS = ['Dinks', 'Drops', 'Resets', 'Rolls / topspin', 'Drives', 'Serves', 'Soft blocks', 'Other touch'];
+  const TOTAL = 9;
+  const state = {
+    step: STEWARD ? 'steward' : 'landing',
+    photoOk: false,
+    hitDone: '',
+    duprBand: '',
+    duprExact: '',
+    yearsPlay: '',
+    trainOverall: '',
+    spinHelp: '',
+    touchHelp: '',
+    hardShotHelp: '',
+    shotsTried: [],
+    vsBare: '',
+    useInPractice: '',
+    bestFor: '',
+    liked: '',
+    disliked: '',
+    name: '',
+    phone: '',
+    contactOptIn: false
+  };
+
+  function uid() { return 't_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function saveResponse(rec) {
+    const all = loadAll();
+    all.push(rec);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function progress(n) {
+    let html = '<div class="progress">';
+    for (let i = 1; i <= TOTAL; i++) html += '<i class="' + (i <= n ? 'on' : '') + '"></i>';
+    return html + '</div>';
+  }
+  function brand() {
+    return '<div class="brand"><span class="brand-dot"></span> Sleeve · training check-in</div>';
+  }
+  function footer() {
+    return '<div class="steward-note">Sleeves stay on site · no product photos · recreational / not tournament legal</div>';
+  }
+  function scaleChips(key, labels) {
+    const labs = labels || ['1', '2', '3', '4', '5'];
+    return '<div class="scale">' + labs.map((lab, i) => {
+      const val = String(i + 1);
+      const on = state[key] === val ? ' on' : '';
+      return '<button type="button" class="chip' + on + '" data-scale="' + key + '" data-val="' + val + '">' + esc(lab) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function render() {
+    const root = document.getElementById('app');
+    const s = state.step;
+    if (s === 'steward') { root.innerHTML = viewSteward(); bindSteward(); return; }
+    if (s === 'landing') root.innerHTML = viewLanding();
+    else if (s === 'gate') root.innerHTML = viewGate();
+    else if (s === 'who') root.innerHTML = viewWho();
+    else if (s === 'hit') root.innerHTML = viewHit();
+    else if (s === 'train') root.innerHTML = viewTrain();
+    else if (s === 'shots') root.innerHTML = viewShots();
+    else if (s === 'practice') root.innerHTML = viewPractice();
+    else if (s === 'words') root.innerHTML = viewWords();
+    else if (s === 'contact') root.innerHTML = viewContact();
+    else if (s === 'done') root.innerHTML = viewDone();
+    bind();
+  }
+
+  function viewLanding() {
+    return brand() + progress(1) + '<div class="card">' +
+      '<h1>Quick training check-in</h1>' +
+      '<p>Thanks for trying the sleeve. ~2 minutes. We’re learning whether it helps people <strong>practice spin, touch, and tougher shots</strong>.</p>' +
+      '<div class="promise">Soft ask only. No spam. Contact only if you opt in at the end.</div>' +
+      '<button class="btn" data-go="gate">Let’s go →</button>' +
+      '</div>' + footer();
+  }
+
+  function viewGate() {
+    return brand() + progress(2) + '<div class="card">' +
+      '<h2>One quick tick</h2>' +
+      '<p>Sleeves stay on court. No photos of the product leave with you.</p>' +
+      '<label class="checkline"><input type="checkbox" id="photoOk" ' + (state.photoOk ? 'checked' : '') + ' />' +
+      '<span>I did not take any photographs of the sleeve</span></label>' +
+      '<button class="btn" id="gateGo" ' + (state.photoOk ? '' : 'disabled') + '>Continue →</button>' +
+      '<button class="btn secondary" data-go="landing">Back</button>' +
+      '</div>' + footer();
+  }
+
+  function viewWho() {
+    const bands = [
+      { id: '2-3', label: 'DUPR ~2.0–2.9' },
+      { id: '3-4', label: 'DUPR ~3.0–3.9' },
+      { id: '4-5', label: 'DUPR ~4.0–4.9' },
+      { id: 'outside', label: 'Outside 2–5 / unsure' },
+      { id: 'skip', label: 'Prefer not to say' }
+    ];
+    const chips = bands.map(b => {
+      const on = state.duprBand === b.id ? ' on' : '';
+      return '<button type="button" class="chip' + on + '" data-band="' + b.id + '">' + esc(b.label) + '</button>';
+    }).join('');
+    return brand() + progress(3) + '<div class="card">' +
+      '<h2>Where are you roughly?</h2>' +
+      '<p class="muted">We’re especially listening to 2–5 DUPR for this round. Pick the closest band.</p>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<label>Exact DUPR if you know it (optional)</label>' +
+      '<input type="text" id="duprExact" inputmode="decimal" placeholder="e.g. 3.4" value="' + esc(state.duprExact) + '" />' +
+      '<label>How long have you been playing?</label>' +
+      '<div class="chips">' +
+        [['&lt;6 mo','lt6'],['6–18 mo','6-18'],['1.5–3 yr','1-3'],['3+ yr','3plus']].map(function(x){
+          const on = state.yearsPlay === x[1] ? ' on' : '';
+          return '<button type="button" class="chip' + on + '" data-years="' + x[1] + '">' + x[0] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<p class="err" id="whoErr">Pick a DUPR band (or Prefer not).</p>' +
+      '<button class="btn" id="whoGo">Next →</button>' +
+      '<button class="btn secondary" data-go="gate">Back</button>' +
+      '</div>';
+  }
+
+  function viewHit() {
+    return brand() + progress(4) + '<div class="card">' +
+      '<h2>Did you hit with the sleeve today?</h2>' +
+      '<div class="chips">' +
+        [['Yes — just now','yes'],['Yes — earlier today','earlier'],['Not yet / feedback only','no']].map(function(x){
+          const on = state.hitDone === x[1] ? ' on' : '';
+          return '<button type="button" class="chip' + on + '" data-hit="' + x[1] + '">' + x[0] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<p class="err" id="hitErr">Tap one.</p>' +
+      '<button class="btn" id="hitGo">Next →</button>' +
+      '<button class="btn secondary" data-go="who">Back</button>' +
+      '</div>';
+  }
+
+  function viewTrain() {
+    return brand() + progress(5) + '<div class="card">' +
+      '<h2>As a training tool</h2>' +
+      '<p class="muted">1 = not useful · 5 = really useful</p>' +
+      '<label>Overall — helpful for learning / practice?</label>' +
+      scaleChips('trainOverall') +
+      '<label>Helps you feel or learn <strong>spin</strong>?</label>' +
+      scaleChips('spinHelp') +
+      '<label>Helps with <strong>touch / soft</strong> shots?</label>' +
+      scaleChips('touchHelp') +
+      '<label>Helps with <strong>more difficult</strong> shots you’re working on?</label>' +
+      scaleChips('hardShotHelp') +
+      '<p class="err" id="trainErr">Please rate all four (tap a number on each).</p>' +
+      '<button class="btn" id="trainGo">Next →</button>' +
+      '<button class="btn secondary" data-go="hit">Back</button>' +
+      '</div>';
+  }
+
+  function viewShots() {
+    const chips = SHOTS.map(function(n){
+      const on = state.shotsTried.indexOf(n) >= 0 ? ' on' : '';
+      return '<button type="button" class="chip' + on + '" data-shot="' + esc(n) + '">' + esc(n) + '</button>';
+    }).join('');
+    return brand() + progress(6) + '<div class="card">' +
+      '<h2>What did you try?</h2>' +
+      '<p class="muted">Tap all that apply.</p>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<label>Vs bare paddle face for practice</label>' +
+      '<div class="chips">' +
+        [['Clearly better','better'],['A bit better','bit'],['About the same','same'],['Worse','worse'],['Hard to say','unsure']].map(function(x){
+          const on = state.vsBare === x[1] ? ' on' : '';
+          return '<button type="button" class="chip' + on + '" data-vs="' + x[1] + '">' + x[0] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<p class="err" id="shotsErr">Pick a vs-bare answer (shots optional).</p>' +
+      '<button class="btn" id="shotsGo">Next →</button>' +
+      '<button class="btn secondary" data-go="train">Back</button>' +
+      '</div>';
+  }
+
+  function viewPractice() {
+    return brand() + progress(7) + '<div class="card">' +
+      '<h2>Would you use this in practice?</h2>' +
+      '<div class="chips">' +
+        [['Yes — regularly','yes'],['Sometimes / drills only','sometimes'],['Maybe','maybe'],['No','no']].map(function(x){
+          const on = state.useInPractice === x[1] ? ' on' : '';
+          return '<button type="button" class="chip' + on + '" data-use="' + x[1] + '">' + x[0] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<label>Who is this best for? (your gut)</label>' +
+      '<div class="chips">' +
+        [['Players like me','like_me'],['Newer players','newer'],['Improving intermediates','inter'],['Advanced only','adv'],['Not sure','unsure']].map(function(x){
+          const on = state.bestFor === x[1] ? ' on' : '';
+          return '<button type="button" class="chip' + on + '" data-best="' + x[1] + '">' + x[0] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<p class="err" id="pracErr">Pick a practice answer.</p>' +
+      '<button class="btn" id="pracGo">Next →</button>' +
+      '<button class="btn secondary" data-go="shots">Back</button>' +
+      '</div>';
+  }
+
+  function viewWords() {
+    return brand() + progress(8) + '<div class="card">' +
+      '<h2>In your words</h2>' +
+      '<label>What clicked? (optional)</label>' +
+      '<textarea id="liked" placeholder="e.g. felt the spin on rolls…">' + esc(state.liked) + '</textarea>' +
+      '<label>What didn’t / what would make it better? (optional)</label>' +
+      '<textarea id="disliked" placeholder="e.g. heavy / fit / confusing…">' + esc(state.disliked) + '</textarea>' +
+      '<button class="btn" data-go="contact">Next →</button>' +
+      '<button class="btn secondary" data-go="practice">Back</button>' +
+      '</div>';
+  }
+
+  function viewContact() {
+    return brand() + progress(9) + '<div class="card">' +
+      '<h2>Optional details</h2>' +
+      '<div class="promise">We will not contact you unless you tick opt-in below.</div>' +
+      '<label>Name (optional)</label>' +
+      '<input type="text" id="name" value="' + esc(state.name) + '" autocomplete="name" />' +
+      '<label>Phone (optional)</label>' +
+      '<input type="tel" id="phone" value="' + esc(state.phone) + '" autocomplete="tel" />' +
+      '<label class="checkline"><input type="checkbox" id="contactOptIn" ' + (state.contactOptIn ? 'checked' : '') + ' />' +
+      '<span>Yes — you may contact me about this test / future sessions</span></label>' +
+      '<button class="btn" id="submit">Submit ✓</button>' +
+      '<button class="btn ghost" id="submitAnon">Submit anonymous →</button>' +
+      '<button class="btn secondary" data-go="words">Back</button>' +
+      '</div>';
+  }
+
+  function viewDone() {
+    const inTarget = ['2-3','3-4','4-5'].indexOf(state.duprBand) >= 0;
+    return brand() + '<div class="card">' +
+      '<h1>You’re a legend. Thanks.</h1>' +
+      '<p>Saved. Go smash another rally — sleeves stay here.</p>' +
+      (inTarget ? '<p><span class="pill">Target band</span> Thanks — you’re in the 2–5 group we’re studying.</p>' :
+        '<p class="muted">Noted outside the main 2–5 listen band — still useful.</p>') +
+      '<p class="tiny">Saved on this phone · steward count ' + loadAll().length + '</p>' +
+      '<button class="btn" id="again">Capture another</button>' +
+      '</div>' + footer();
+  }
+
+  function viewSteward() {
+    const all = loadAll();
+    const rows = all.slice().reverse().map(function(r){
+      return '<tr><td>' + esc(r.tsLocal || '') + '</td><td>' +
+        esc(r.name || 'anon') + '<br>' + esc(r.phone || '') + '</td><td>' +
+        'DUPR ' + esc(r.duprBand) + (r.duprExact ? ' (' + esc(r.duprExact) + ')' : '') +
+        '<br>train ' + esc(r.trainOverall) + ' · spin ' + esc(r.spinHelp) +
+        ' · touch ' + esc(r.touchHelp) + ' · hard ' + esc(r.hardShotHelp) +
+        '<br>practice: ' + esc(r.useInPractice) + ' · vs bare: ' + esc(r.vsBare) +
+        '<br>shots: ' + esc((r.shotsTried || []).join(', ')) +
+        '<br>liked: ' + esc(r.liked || '—') +
+        '<br>dislike: ' + esc(r.disliked || '—') +
+        '</td></tr>';
+    }).join('');
+    return '<div class="brand"><span class="brand-dot"></span> STEWARD · training</div>' +
+      '<div class="card"><h2>Responses <span class="pill">' + all.length + '</span></h2>' +
+      '<p class="tiny">Hidden view · add <code>?steward=1</code> · localStorage only</p>' +
+      '<table class="resp"><thead><tr><th>When</th><th>Who</th><th>Data</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="3">No responses yet</td></tr>') +
+      '</tbody></table>' +
+      '<button class="btn" id="exportJson">Export JSON</button>' +
+      '<button class="btn secondary" id="exportCsv">Export CSV</button>' +
+      '<button class="btn ghost" id="clearAll">Clear all (careful)</button>' +
+      '<button class="btn secondary" id="openFlow">Open player flow</button>' +
+      '</div>';
+  }
+
+  function bindSteward() {
+    document.getElementById('exportJson').onclick = function(){
+      const blob = new Blob([JSON.stringify(loadAll(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'rbbr-training-survey.json';
+      a.click();
+    };
+    document.getElementById('exportCsv').onclick = function(){
+      const all = loadAll();
+      const cols = ['tsLocal','duprBand','duprExact','yearsPlay','hitDone','trainOverall','spinHelp','touchHelp','hardShotHelp','shotsTried','vsBare','useInPractice','bestFor','liked','disliked','name','phone','contactOptIn'];
+      const lines = [cols.join(',')].concat(all.map(function(r){
+        return cols.map(function(c){
+          var v = r[c];
+          if (Array.isArray(v)) v = v.join('|');
+          return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        }).join(',');
+      }));
+      const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'rbbr-training-survey.csv';
+      a.click();
+    };
+    document.getElementById('clearAll').onclick = function(){
+      if (confirm('Clear ALL training responses on this phone?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+      }
+    };
+    document.getElementById('openFlow').onclick = function(){
+      location.search = '';
+    };
+  }
+
+  function commit(anon) {
+    if (anon) {
+      state.name = '';
+      state.phone = '';
+      state.contactOptIn = false;
+    }
+    const now = new Date();
+    const local = now.toLocaleString('en-AU', { timeZone: 'Australia/Sydney', hour12: false });
+    saveResponse({
+      id: uid(),
+      survey: 'training_v1',
+      ts: now.toISOString(),
+      tsLocal: local + ' AEST',
+      photoOk: true,
+      hitDone: state.hitDone,
+      duprBand: state.duprBand,
+      duprExact: state.duprExact,
+      yearsPlay: state.yearsPlay,
+      trainOverall: state.trainOverall,
+      spinHelp: state.spinHelp,
+      touchHelp: state.touchHelp,
+      hardShotHelp: state.hardShotHelp,
+      shotsTried: state.shotsTried.slice(),
+      vsBare: state.vsBare,
+      useInPractice: state.useInPractice,
+      bestFor: state.bestFor,
+      liked: state.liked,
+      disliked: state.disliked,
+      name: state.name,
+      phone: state.phone,
+      contactOptIn: state.contactOptIn,
+      inTargetBand: ['2-3','3-4','4-5'].indexOf(state.duprBand) >= 0
+    });
+    state.step = 'done';
+    render();
+  }
+
+  function bind() {
+    document.querySelectorAll('[data-go]').forEach(function(el){
+      el.onclick = function(){ state.step = el.getAttribute('data-go'); render(); };
+    });
+
+    const photo = document.getElementById('photoOk');
+    if (photo) {
+      photo.onchange = function(e){
+        state.photoOk = e.target.checked;
+        const b = document.getElementById('gateGo');
+        if (b) b.disabled = !state.photoOk;
+      };
+      document.getElementById('gateGo').onclick = function(){
+        if (!state.photoOk) return;
+        state.step = 'who';
+        render();
+      };
+    }
+
+    document.querySelectorAll('[data-band]').forEach(function(el){
+      el.onclick = function(){ state.duprBand = el.getAttribute('data-band'); render(); };
+    });
+    document.querySelectorAll('[data-years]').forEach(function(el){
+      el.onclick = function(){ state.yearsPlay = el.getAttribute('data-years'); render(); };
+    });
+    const duprExact = document.getElementById('duprExact');
+    if (duprExact) duprExact.oninput = function(){ state.duprExact = duprExact.value; };
+    const whoGo = document.getElementById('whoGo');
+    if (whoGo) whoGo.onclick = function(){
+      if (!state.duprBand) { document.getElementById('whoErr').classList.add('on'); return; }
+      state.step = 'hit'; render();
+    };
+
+    document.querySelectorAll('[data-hit]').forEach(function(el){
+      el.onclick = function(){ state.hitDone = el.getAttribute('data-hit'); render(); };
+    });
+    const hitGo = document.getElementById('hitGo');
+    if (hitGo) hitGo.onclick = function(){
+      if (!state.hitDone) { document.getElementById('hitErr').classList.add('on'); return; }
+      state.step = 'train'; render();
+    };
+
+    document.querySelectorAll('[data-scale]').forEach(function(el){
+      el.onclick = function(){
+        state[el.getAttribute('data-scale')] = el.getAttribute('data-val');
+        render();
+      };
+    });
+    const trainGo = document.getElementById('trainGo');
+    if (trainGo) trainGo.onclick = function(){
+      if (!state.trainOverall || !state.spinHelp || !state.touchHelp || !state.hardShotHelp) {
+        document.getElementById('trainErr').classList.add('on'); return;
+      }
+      state.step = 'shots'; render();
+    };
+
+    document.querySelectorAll('[data-shot]').forEach(function(el){
+      el.onclick = function(){
+        const n = el.getAttribute('data-shot');
+        const i = state.shotsTried.indexOf(n);
+        if (i >= 0) state.shotsTried.splice(i, 1); else state.shotsTried.push(n);
+        render();
+      };
+    });
+    document.querySelectorAll('[data-vs]').forEach(function(el){
+      el.onclick = function(){ state.vsBare = el.getAttribute('data-vs'); render(); };
+    });
+    const shotsGo = document.getElementById('shotsGo');
+    if (shotsGo) shotsGo.onclick = function(){
+      if (!state.vsBare) { document.getElementById('shotsErr').classList.add('on'); return; }
+      state.step = 'practice'; render();
+    };
+
+    document.querySelectorAll('[data-use]').forEach(function(el){
+      el.onclick = function(){ state.useInPractice = el.getAttribute('data-use'); render(); };
+    });
+    document.querySelectorAll('[data-best]').forEach(function(el){
+      el.onclick = function(){ state.bestFor = el.getAttribute('data-best'); render(); };
+    });
+    const pracGo = document.getElementById('pracGo');
+    if (pracGo) pracGo.onclick = function(){
+      if (!state.useInPractice) { document.getElementById('pracErr').classList.add('on'); return; }
+      state.step = 'words'; render();
+    };
+
+    const liked = document.getElementById('liked');
+    if (liked) {
+      liked.oninput = function(){ state.liked = liked.value; };
+      document.getElementById('disliked').oninput = function(e){ state.disliked = e.target.value; };
+    }
+
+    const name = document.getElementById('name');
+    if (name) {
+      name.oninput = function(){ state.name = name.value; };
+      document.getElementById('phone').oninput = function(e){ state.phone = e.target.value; };
+      document.getElementById('contactOptIn').onchange = function(e){ state.contactOptIn = e.target.checked; };
+      document.getElementById('submit').onclick = function(){ commit(false); };
+      document.getElementById('submitAnon').onclick = function(){ commit(true); };
+    }
+
+    const again = document.getElementById('again');
+    if (again) again.onclick = function(){
+      Object.assign(state, {
+        step: 'landing', photoOk: false, hitDone: '', duprBand: '', duprExact: '', yearsPlay: '',
+        trainOverall: '', spinHelp: '', touchHelp: '', hardShotHelp: '', shotsTried: [],
+        vsBare: '', useInPractice: '', bestFor: '', liked: '', disliked: '',
+        name: '', phone: '', contactOptIn: false
+      });
+      render();
+    };
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
